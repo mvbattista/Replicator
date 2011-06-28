@@ -1,0 +1,53 @@
+CREATE client_group_display_types Fina::Corp::M::Client::Group::DisplayType
+ID
+FF
+name varchar NN
+display_label varchar NN
+RELATIONSHIP groups 1* Fina::Corp::M::Client::Group id client_group_display_type_id
+ENDTABLE
+
+CREATE client_group_types Fina::Corp::M::Client::Group::Type
+ID
+FF
+name varchar NN
+display_label varchar NN
+RELATIONSHIP groups 1* Fina::Corp::M::Client::Group id group_type_id
+RELATIONSHIP groups_map 1* Fina::Corp::M::Client::Group::PersonMap id client_group_type_id
+ENDTABLE
+
+CREATE client_groups Fina::Corp::M::Client::Group;
+ID
+FF
+client_id integer NN U1 FK-clients-id-Fina::Corp::M::Client-client
+owner_id integer FK-client_people-id-Fina::Corp::M::Client::ClientPerson-owner
+name varchar NN U1
+display_label varchar NN
+display_image_url varchar NN D=''
+description varchar NN D=''
+group_type_id integer NN U1 FK-client_group_types-id-Fina::Corp::M::Client::Group::Type-group_type
+value varchar NN D=''
+group_display_type_id integer NN FK-client_group_display_types-id-Fina::Corp::M::Client::Group::DisplayType-group_display_type
+start_date timestamp
+end_date timestamp
+RELATIONSHIP ancestor_group 1* Fina::Corp::M::Client::Group::Path id ancestor_group
+RELATIONSHIP descendant_group 1* Fina::Corp::M::Client::Group::Path id descendant_group
+RELATIONSHIP group_person_map 1* Fina::Corp::M::Client::Group::PersonMap id client_group
+ENDTABLE
+
+CREATE client_group_paths Fina::Corp::M::Client::Group::Path
+FF
+ancestor_group_id integer NN P FK-client_groups-id-Fina::Corp::M::Client::Group-ancestor_group
+descendant_group_id integer NN P U1 FK-client_groups-id-Fina::Corp::M::Client::Group-descendant_group
+depth integer U1
+ENDTABLE
+
+CREATE client_group_person_map Fina::Corp::M::Client::Group::PersonMap
+ID
+FF
+client_person_id integer NN FK-client_people-id-Fina::Corp::M::Client::ClientPerson-client_person
+client_group_id integer NN FK-client_groups-id-Fina::Corp::M::Client::Group-client_group
+client_group_type_id integer NN FK-client_group_types-id-Fina::Corp::M::Client::Group::Type-client_group_type
+start_date timestamp
+end_date timestamp
+explicit boolean D=false
+ENDTABLE
