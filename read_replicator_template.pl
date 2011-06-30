@@ -30,6 +30,7 @@ for (my $arr = 0; $arr < scalar(@tables); $arr++) {
     $table{name} = $names[0];
     $table{class_name} = $names[1];
     $table{fields} = [];
+    $table{uniques} = [];
     $table{primary_key} = [];
     $table{constraints} = [];
     $table{relationships} = [];
@@ -40,6 +41,7 @@ for (my $arr = 0; $arr < scalar(@tables); $arr++) {
             name => 'id', type => 'SERIAL', primary_key => 1, not_null => 1, sequence => $table{name}.'_id_seq',
         };
         push @{$table{fields}}, $id;
+        push @{$table{primary_key}}, 'id';
     }
     if (any {$_ =~ /^FF$/i} @a) {
         my $i = first_index {$_ =~ /^FF$/i} @a;
@@ -67,6 +69,7 @@ for (my $arr = 0; $arr < scalar(@tables); $arr++) {
         push @{$table{relationships}}, $r_obj;
     }
     @a = grep(!/^RELATIONSHIP /, @a);
+    my @single_uniques;
     for my $line (@a) {
         my @b = split(/\s+/, $line);
         my $field_name = shift @b;
@@ -106,12 +109,19 @@ for (my $arr = 0; $arr < scalar(@tables); $arr++) {
             while (any {$_ =~ /^U(\d*)$/i} @b) {
                 my $i = first_index {$_ =~ /^U/i} @b;
                 splice(@b, $i, 1);
-                # Add to uniques
+                if ($1) {
+                    my $index = $1 - 1;
+                    push @{$table{uniques}->[$index]}, $field_name;
+                } else {
+                    push @single_uniques, [$field_name];
+                }
             } 
         }
-        my $s = {name => $field_name, type => $field_type};
+        push @{$table{uniques}}, @single_uniques;
+        my %s = ('name', $field_name, 'type', $field_type);
         $s{not_null} = 1 if ($not_null);
         $s{default} = $default if (defined($default));
+        push @{$table{fields}}, \%s;
 
 #       push @{$table{fields}}, {name => 'last_modified', type => 'TIMESTAMP', not_null => 1 };
     }
@@ -119,4 +129,4 @@ for (my $arr = 0; $arr < scalar(@tables); $arr++) {
     print "@a\n\n";
     $tables[$arr] = \%table;
 }
-#print Dumper(\@tables);
+print Dumper(\@tables);
