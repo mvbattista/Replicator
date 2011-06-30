@@ -1,0 +1,432 @@
+[mbattista@v3 camp66]$ with-camp perl read_replicator_template.pl groups_replicator_template.txt > out.txt
+
+name varchar NN
+display_label varchar NN
+
+name varchar NN
+display_label varchar NN
+
+client_id integer NN U1 FK-clients-id-Fina::Corp::M::Client-client
+owner_id integer FK-client_people-id-Fina::Corp::M::Client::ClientPerson-owner
+name varchar NN U1
+display_label varchar NN
+display_image_url varchar NN D=''
+description varchar NN D=''
+group_type_id integer NN U1 FK-client_group_types-id-Fina::Corp::M::Client::Group::Type-group_type
+value varchar NN D=''
+group_display_type_id integer NN FK-client_group_display_types-id-Fina::Corp::M::Client::Group::DisplayType-group_display_type
+start_date timestamp
+end_date timestamp
+
+ancestor_group_id integer NN P FK-client_groups-id-Fina::Corp::M::Client::Group-ancestor_group
+descendant_group_id integer NN P U1 FK-client_groups-id-Fina::Corp::M::Client::Group-descendant_group
+depth integer U1
+
+client_person_id integer NN FK-client_people-id-Fina::Corp::M::Client::ClientPerson-client_person
+client_group_id integer NN FK-client_groups-id-Fina::Corp::M::Client::Group-client_group
+client_group_type_id integer NN FK-client_group_types-id-Fina::Corp::M::Client::Group::Type-client_group_type
+start_date timestamp
+end_date timestamp
+explicit boolean D=false
+
+$VAR1 = [
+          {
+            'class_name' => 'Fina::Corp::M::Client::Group::DisplayType',
+            'constraints' => [],
+            'primary_key' => [
+                               'id'
+                             ],
+            'fields' => [
+                          {
+                            'primary_key' => 1,
+                            'sequence' => 'client_group_display_types_id_seq',
+                            'not_null' => 1,
+                            'name' => 'id',
+                            'type' => 'SERIAL'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'date_created',
+                            'default' => 'now',
+                            'type' => 'TIMESTAMP'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'created_by',
+                            'default' => '',
+                            'type' => 'VARCHAR'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'last_modified',
+                            'type' => 'TIMESTAMP'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'modified_by',
+                            'default' => '',
+                            'type' => 'VARCHAR'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'name',
+                            'type' => 'VARCHAR'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'display_label',
+                            'type' => 'VARCHAR'
+                          }
+                        ],
+            'relationships' => [
+                                 {
+                                   'name' => 'groups',
+                                   'foreign_column' => 'client_group_display_type_id',
+                                   'class' => 'Fina::Corp::M::Client::Group',
+                                   'type' => 'one to many',
+                                   'column' => 'id'
+                                 }
+                               ],
+            'name' => 'client_group_display_types',
+            'uniques' => []
+          },
+          {
+            'class_name' => 'Fina::Corp::M::Client::Group::Type',
+            'constraints' => [],
+            'primary_key' => [
+                               'id'
+                             ],
+            'fields' => [
+                          {
+                            'primary_key' => 1,
+                            'sequence' => 'client_group_types_id_seq',
+                            'not_null' => 1,
+                            'name' => 'id',
+                            'type' => 'SERIAL'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'date_created',
+                            'default' => 'now',
+                            'type' => 'TIMESTAMP'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'created_by',
+                            'default' => '',
+                            'type' => 'VARCHAR'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'last_modified',
+                            'type' => 'TIMESTAMP'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'modified_by',
+                            'default' => '',
+                            'type' => 'VARCHAR'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'name',
+                            'type' => 'VARCHAR'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'display_label',
+                            'type' => 'VARCHAR'
+                          }
+                        ],
+            'relationships' => [
+                                 {
+                                   'name' => 'groups',
+                                   'foreign_column' => 'group_type_id',
+                                   'class' => 'Fina::Corp::M::Client::Group',
+                                   'type' => 'one to many',
+                                   'column' => 'id'
+                                 },
+                                 {
+                                   'name' => 'groups_map',
+                                   'foreign_column' => 'client_group_type_id',
+                                   'class' => 'Fina::Corp::M::Client::Group::PersonMap',
+                                   'type' => 'one to many',
+                                   'column' => 'id'
+                                 }
+                               ],
+            'name' => 'client_group_types',
+            'uniques' => []
+          },
+          {
+            'class_name' => 'Fina::Corp::M::Client::Group;',
+            'constraints' => [
+                               {
+                                 'model_class' => 'Fina::Corp::M::Client::ClientPerson',
+                                 'sql_column' => 'id',
+                                 'model_name' => 'owner',
+                                 'sql_table' => 'client_people',
+                                 'field' => 'owner_id'
+                               }
+                             ],
+            'primary_key' => [
+                               'id'
+                             ],
+            'fields' => [
+                          {
+                            'primary_key' => 1,
+                            'sequence' => 'client_groups_id_seq',
+                            'not_null' => 1,
+                            'name' => 'id',
+                            'type' => 'SERIAL'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'date_created',
+                            'default' => 'now',
+                            'type' => 'TIMESTAMP'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'created_by',
+                            'default' => '',
+                            'type' => 'VARCHAR'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'last_modified',
+                            'type' => 'TIMESTAMP'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'modified_by',
+                            'default' => '',
+                            'type' => 'VARCHAR'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'client_id',
+                            'type' => 'INTEGER'
+                          },
+                          {
+                            'name' => 'owner_id',
+                            'type' => 'INTEGER'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'name',
+                            'type' => 'VARCHAR'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'display_label',
+                            'type' => 'VARCHAR'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'display_image_url',
+                            'type' => 'VARCHAR'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'description',
+                            'type' => 'VARCHAR'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'group_type_id',
+                            'type' => 'INTEGER'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'value',
+                            'type' => 'VARCHAR'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'group_display_type_id',
+                            'type' => 'INTEGER'
+                          },
+                          {
+                            'name' => 'start_date',
+                            'type' => 'TIMESTAMP'
+                          },
+                          {
+                            'name' => 'end_date',
+                            'type' => 'TIMESTAMP'
+                          }
+                        ],
+            'relationships' => [
+                                 {
+                                   'name' => 'ancestor_group',
+                                   'foreign_column' => 'ancestor_group',
+                                   'class' => 'Fina::Corp::M::Client::Group::Path',
+                                   'type' => 'one to many',
+                                   'column' => 'id'
+                                 },
+                                 {
+                                   'name' => 'descendant_group',
+                                   'foreign_column' => 'descendant_group',
+                                   'class' => 'Fina::Corp::M::Client::Group::Path',
+                                   'type' => 'one to many',
+                                   'column' => 'id'
+                                 },
+                                 {
+                                   'name' => 'group_person_map',
+                                   'foreign_column' => 'client_group',
+                                   'class' => 'Fina::Corp::M::Client::Group::PersonMap',
+                                   'type' => 'one to many',
+                                   'column' => 'id'
+                                 }
+                               ],
+            'name' => 'client_groups',
+            'uniques' => [
+                           [
+                             'client_id'
+                           ],
+                           $VAR1->[2]{'uniques'}[0],
+                           $VAR1->[2]{'uniques'}[0],
+                           $VAR1->[2]{'uniques'}[0],
+                           $VAR1->[2]{'uniques'}[0],
+                           $VAR1->[2]{'uniques'}[0],
+                           $VAR1->[2]{'uniques'}[0],
+                           [
+                             'group_type_id'
+                           ],
+                           $VAR1->[2]{'uniques'}[0],
+                           $VAR1->[2]{'uniques'}[7],
+                           $VAR1->[2]{'uniques'}[0],
+                           $VAR1->[2]{'uniques'}[7],
+                           $VAR1->[2]{'uniques'}[0],
+                           $VAR1->[2]{'uniques'}[7],
+                           $VAR1->[2]{'uniques'}[0],
+                           $VAR1->[2]{'uniques'}[7]
+                         ]
+          },
+          {
+            'class_name' => 'Fina::Corp::M::Client::Group::Path',
+            'constraints' => [],
+            'primary_key' => [
+                               'ancestor_group_id',
+                               'descendant_group_id'
+                             ],
+            'fields' => [
+                          {
+                            'not_null' => 1,
+                            'name' => 'date_created',
+                            'default' => 'now',
+                            'type' => 'TIMESTAMP'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'created_by',
+                            'default' => '',
+                            'type' => 'VARCHAR'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'last_modified',
+                            'type' => 'TIMESTAMP'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'modified_by',
+                            'default' => '',
+                            'type' => 'VARCHAR'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'ancestor_group_id',
+                            'type' => 'INTEGER'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'descendant_group_id',
+                            'type' => 'INTEGER'
+                          },
+                          {
+                            'name' => 'depth',
+                            'type' => 'INTEGER'
+                          }
+                        ],
+            'relationships' => [],
+            'name' => 'client_group_paths',
+            'uniques' => [
+                           [
+                             'descendant_group_id'
+                           ],
+                           $VAR1->[3]{'uniques'}[0],
+                           [
+                             'depth'
+                           ]
+                         ]
+          },
+          {
+            'class_name' => 'Fina::Corp::M::Client::Group::PersonMap',
+            'constraints' => [],
+            'primary_key' => [
+                               'id'
+                             ],
+            'fields' => [
+                          {
+                            'primary_key' => 1,
+                            'sequence' => 'client_group_person_map_id_seq',
+                            'not_null' => 1,
+                            'name' => 'id',
+                            'type' => 'SERIAL'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'date_created',
+                            'default' => 'now',
+                            'type' => 'TIMESTAMP'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'created_by',
+                            'default' => '',
+                            'type' => 'VARCHAR'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'last_modified',
+                            'type' => 'TIMESTAMP'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'modified_by',
+                            'default' => '',
+                            'type' => 'VARCHAR'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'client_person_id',
+                            'type' => 'INTEGER'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'client_group_id',
+                            'type' => 'INTEGER'
+                          },
+                          {
+                            'not_null' => 1,
+                            'name' => 'client_group_type_id',
+                            'type' => 'INTEGER'
+                          },
+                          {
+                            'name' => 'start_date',
+                            'type' => 'TIMESTAMP'
+                          },
+                          {
+                            'name' => 'end_date',
+                            'type' => 'TIMESTAMP'
+                          },
+                          {
+                            'name' => 'explicit',
+                            'type' => 'BOOLEAN'
+                          }
+                        ],
+            'relationships' => [],
+            'name' => 'client_group_person_map',
+            'uniques' => []
+          }
+        ];
