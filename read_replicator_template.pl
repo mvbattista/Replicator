@@ -50,6 +50,8 @@ for (my $arr = 0; $arr < scalar(@tables); $arr++) {
         push @{$table{fields}}, {name => 'created_by', type => 'VARCHAR', not_null => 1, default => '', };
         push @{$table{fields}}, {name => 'last_modified', type => 'TIMESTAMP', not_null => 1 };
         push @{$table{fields}}, {name => 'modified_by', type => 'VARCHAR', not_null => 1, default => '', };
+        push @{$table{triggers}}, {name => .$table{name}'_last_modified', table => $table{name}};
+
     }
     my @r_lines = grep(/^RELATIONSHIP /, @a);
     for my $r_line (@r_lines) {
