@@ -38,7 +38,7 @@ for (my $arr = 0; $arr < scalar(@tables); $arr++) {
         my $i = first_index {$_ =~ /^ID$/i} @a;
         splice(@a, $i, 1);
         my $id = { 
-            name => 'id', type => 'SERIAL', primary_key => 1, not_null => 1, sequence => $table{name}.'_id_seq',
+            name => 'id', type => 'SERIAL', not_null => 1, sequence => $table{name}.'_id_seq',
         };
         push @{$table{fields}}, $id;
         push @{$table{primary_key}}, 'id';
@@ -74,29 +74,21 @@ for (my $arr = 0; $arr < scalar(@tables); $arr++) {
         my @b = split(/\s+/, $line);
         my $field_name = shift @b;
         my $field_type = uc shift @b;
-        my $not_null;
-        my $default;
+        my $not_null = 0;
+        my $default = undef;;
         while (scalar (@b) > 0) {
-            if (any {$_ =~ /^NN$/i} @b) {
-                my $i = first_index {$_ =~ /^ID$/i} @b;
-                splice(@b, $i, 1);
-                $not_null = 1;
-            } else { $not_null = 0; }
-            if (any {$_ =~ /^D=(.+)$/i} @b) {
-                my $i = first_index {$_ =~ /^D=$/i} @b;
-                splice(@b, $i, 1);
+            my $reading = shift @b;
+            if ($reading =~ /^NN$/i) {
+                $not_null = 1; next;
+            }
+            elsif ($reading =~ /^D=(.+)$/i) {
                 $default = $1;
-            } else { $default = undef; }
-            if (any {$_ =~ /^P$/i} @b) {
-                my $i = first_index {$_ =~ /^P$/i} @b;
-                splice(@b, $i, 1);
+            }
+            elsif ($reading =~ /^P$/i) {
                 push @{$table{primary_key}}, $field_name;
-            } 
-            if (any {$_ =~ /^FK/i} @b) {
-                my $i = first_index {$_ =~ /^FK/i} @b;
-                my $fk_line = $b[$i];
-                splice(@b, $i, 1);
-                my @fk = split(/-/, $fk_line);
+            }
+            elsif ($reading =~ /^FK/i) {
+                my @fk = split(/-/, $reading);
                 shift @fk;
                 my $z = {
                     field => $field_name,
@@ -107,16 +99,17 @@ for (my $arr = 0; $arr < scalar(@tables); $arr++) {
                 };
                 push @{$table{constraints}}, $z;
             } 
-            while (any {$_ =~ /^U(\d*)$/i} @b) {
-                my $i = first_index {$_ =~ /^U/i} @b;
-                splice(@b, $i, 1);
-                if ($1) {
-                    my $index = $1 - 1;
+            elsif ($reading =~ /^U\d*$/i) {
+                $reading =~ /^U(\d*)$/i;
+                if ($1 !~ //) {
+                    my $index = $1;
+                    $index--;
                     push @{$table{uniques}->[$index]}, $field_name;
                 } else {
                     push @single_uniques, [$field_name];
                 }
-            } 
+            }
+            else { die "Cannot recognize $reading\n"; }
         }
         push @{$table{uniques}}, @single_uniques;
         my %s = ('name', $field_name, 'type', $field_type);
@@ -124,10 +117,8 @@ for (my $arr = 0; $arr < scalar(@tables); $arr++) {
         $s{default} = $default if (defined($default));
         push @{$table{fields}}, \%s;
 
-#       push @{$table{fields}}, {name => 'last_modified', type => 'TIMESTAMP', not_null => 1 };
     }
     $" = "\n";
-    print "@a\n\n";
     $tables[$arr] = \%table;
 }
-print Dumper(\@tables);
+print Dumper(@tables);
