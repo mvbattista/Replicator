@@ -41,6 +41,7 @@ sub replicator_ddl_generator {
         my $comma_count = scalar @{$table->{fields}};
         $comma_count += scalar @{$table->{uniques}};
         $comma_count += scalar @{$table->{constraints}};
+        $comma_count += 1 if (scalar @{$table->{primary_key}} > 1);
         $comma_count--;
 
         $s .= "CREATE TABLE "; $s .= $table->{name}; $s .= "(\n";
@@ -48,7 +49,7 @@ sub replicator_ddl_generator {
         for my $i (@{$table->{fields}}) {
             $s .= "    $i->{name} ";
             $s .= uc $i->{type};
-            $s .= " PRIMARY KEY" if ($i->{primary_key});
+            $s .= " PRIMARY KEY" if ($i->{primary_key} and scalar @{$table->{primary_key}} == 1);
             $s .= " NOT NULL" if ($i->{not_null});
             if (exists $i->{default}) {
                 if ($i->{default} eq 'now') {
@@ -84,6 +85,20 @@ sub replicator_ddl_generator {
 	                $s .= "\n";
 	            }
             }
+        }
+        if (scalar @{$table->{primary_key}} > 1) {
+        	my $str = "    CONSTRAINT pk_".$table->{name}." PRIMARY KEY ( ";
+        	my $f = join(', ', @{$table->{primary_key}});
+        	$str .= $f;
+        	$str .= " )";
+            $s .= $str;
+            unless ($comma_count == 0) {
+                $s .= ",\n";
+                $comma_count--;
+            }
+            else {
+                $s .= "\n";
+            }        	
         }
         for my $i (@{$table->{constraints}}) {
             my $str = "    CONSTRAINT fk_".$i->{field}." FOREIGN KEY (".$i->{field}.

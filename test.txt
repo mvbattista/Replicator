@@ -55,6 +55,7 @@ CREATE TABLE client_group_paths(
     descendant_group_id INTEGER NOT NULL,
     depth INTEGER,
      UNIQUE(descendant_group_id, depth),
+    CONSTRAINT pk_client_group_paths PRIMARY KEY ( ancestor_group_id, descendant_group_id ),
     CONSTRAINT fk_ancestor_group_id FOREIGN KEY (ancestor_group_id) REFERENCES client_groups (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT fk_descendant_group_id FOREIGN KEY (descendant_group_id) REFERENCES client_groups (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
 );
