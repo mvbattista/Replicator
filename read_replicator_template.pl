@@ -38,7 +38,7 @@ for (my $arr = 0; $arr < scalar(@tables); $arr++) {
         my $i = first_index {$_ =~ /^ID$/i} @a;
         splice(@a, $i, 1);
         my $id = { 
-            name => 'id', type => 'SERIAL', not_null => 1, sequence => $table{name}.'_id_seq',
+            name => 'id', type => 'SERIAL', not_null => 1, sequence => $table{name}.'_id_seq', primary_key => 1,
         };
         push @{$table{fields}}, $id;
         push @{$table{primary_key}}, 'id';
@@ -71,6 +71,21 @@ for (my $arr = 0; $arr < scalar(@tables); $arr++) {
         push @{$table{relationships}}, $r_obj;
     }
     @a = grep(!/^RELATIONSHIP /, @a);
+    if (any {$_ =~ /^TEST$/i} @a) {
+        my $i = first_index {$_ =~ /^TEST$/i} @a;
+        splice(@a, $i, 1);
+        $table{create_test_file} = 1;
+    }
+    if (any {$_ =~ /^MODEL$/i} @a) {
+        my $i = first_index {$_ =~ /^MODEL$/i} @a;
+        splice(@a, $i, 1);
+        $table{create_model_file} = 1;
+    }    
+    if (any {$_ =~ /^MANAGE$/i} @a) {
+        my $i = first_index {$_ =~ /^MANAGE$/i} @a;
+        splice(@a, $i, 1);
+        $table{create_manage_file} = 1;
+    }    
     my @single_uniques;
     for my $line (@a) {
         my @b = split(/\s+/, $line);

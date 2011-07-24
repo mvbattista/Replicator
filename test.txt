@@ -1,0 +1,113 @@
+BEGIN;
+
+\echo Creating tables.
+
+CREATE TABLE client_group_display_types(
+    id SERIAL PRIMARY KEY NOT NULL,
+    date_created TIMESTAMP NOT NULL DEFAULT timeofday()::TIMESTAMP,
+    created_by VARCHAR NOT NULL DEFAULT '',
+    last_modified TIMESTAMP NOT NULL,
+    modified_by VARCHAR NOT NULL DEFAULT '',
+    name VARCHAR NOT NULL,
+    display_label VARCHAR NOT NULL
+);
+
+CREATE TABLE client_group_types(
+    id SERIAL PRIMARY KEY NOT NULL,
+    date_created TIMESTAMP NOT NULL DEFAULT timeofday()::TIMESTAMP,
+    created_by VARCHAR NOT NULL DEFAULT '',
+    last_modified TIMESTAMP NOT NULL,
+    modified_by VARCHAR NOT NULL DEFAULT '',
+    name VARCHAR NOT NULL,
+    display_label VARCHAR NOT NULL
+);
+
+CREATE TABLE client_groups(
+    id SERIAL PRIMARY KEY NOT NULL,
+    date_created TIMESTAMP NOT NULL DEFAULT timeofday()::TIMESTAMP,
+    created_by VARCHAR NOT NULL DEFAULT '',
+    last_modified TIMESTAMP NOT NULL,
+    modified_by VARCHAR NOT NULL DEFAULT '',
+    client_id INTEGER NOT NULL,
+    owner_id INTEGER,
+    name VARCHAR NOT NULL,
+    display_label VARCHAR NOT NULL,
+    display_image_url VARCHAR NOT NULL DEFAULT '',
+    description VARCHAR NOT NULL DEFAULT '',
+    group_type_id INTEGER NOT NULL,
+    value VARCHAR NOT NULL DEFAULT '',
+    group_display_type_id INTEGER NOT NULL,
+    start_date TIMESTAMP,
+    end_date TIMESTAMP,
+     UNIQUE(client_id, name, group_type_id),
+    CONSTRAINT fk_client_id FOREIGN KEY (client_id) REFERENCES clients (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_owner_id FOREIGN KEY (owner_id) REFERENCES client_people (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_group_type_id FOREIGN KEY (group_type_id) REFERENCES client_group_types (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_group_display_type_id FOREIGN KEY (group_display_type_id) REFERENCES client_group_display_types (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE client_group_paths(
+    date_created TIMESTAMP NOT NULL DEFAULT timeofday()::TIMESTAMP,
+    created_by VARCHAR NOT NULL DEFAULT '',
+    last_modified TIMESTAMP NOT NULL,
+    modified_by VARCHAR NOT NULL DEFAULT '',
+    ancestor_group_id INTEGER NOT NULL,
+    descendant_group_id INTEGER NOT NULL,
+    depth INTEGER,
+     UNIQUE(descendant_group_id, depth),
+    CONSTRAINT fk_ancestor_group_id FOREIGN KEY (ancestor_group_id) REFERENCES client_groups (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_descendant_group_id FOREIGN KEY (descendant_group_id) REFERENCES client_groups (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE client_group_person_map(
+    id SERIAL PRIMARY KEY NOT NULL,
+    date_created TIMESTAMP NOT NULL DEFAULT timeofday()::TIMESTAMP,
+    created_by VARCHAR NOT NULL DEFAULT '',
+    last_modified TIMESTAMP NOT NULL,
+    modified_by VARCHAR NOT NULL DEFAULT '',
+    client_person_id INTEGER NOT NULL,
+    client_group_id INTEGER NOT NULL,
+    client_group_type_id INTEGER NOT NULL,
+    start_date TIMESTAMP,
+    end_date TIMESTAMP,
+    explicit BOOLEAN DEFAULT false,
+    CONSTRAINT fk_client_person_id FOREIGN KEY (client_person_id) REFERENCES client_people (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_client_group_id FOREIGN KEY (client_group_id) REFERENCES client_groups (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_client_group_type_id FOREIGN KEY (client_group_type_id) REFERENCES client_group_types (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+\echo Table creation complete.
+
+\echo Creating triggers.
+
+CREATE TRIGGER client_group_display_types_last_modified
+    BEFORE INSERT OR UPDATE ON client_group_display_types
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_last_modified()
+;
+CREATE TRIGGER client_group_types_last_modified
+    BEFORE INSERT OR UPDATE ON client_group_types
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_last_modified()
+;
+CREATE TRIGGER client_groups_last_modified
+    BEFORE INSERT OR UPDATE ON client_groups
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_last_modified()
+;
+CREATE TRIGGER client_group_paths_last_modified
+    BEFORE INSERT OR UPDATE ON client_group_paths
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_last_modified()
+;
+CREATE TRIGGER client_group_person_map_last_modified
+    BEFORE INSERT OR UPDATE ON client_group_person_map
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_last_modified()
+;
+
+\echo Trigger creation complete.
+
+
+--ROLLBACK;
+COMMIT;
