@@ -15,7 +15,7 @@ RELATIONSHIP groups 1* Fina::Corp::M::Client::Group id group_type_id
 RELATIONSHIP groups_map 1* Fina::Corp::M::Client::Group::PersonMap id client_group_type_id
 ENDTABLE
 
-CREATE client_groups Fina::Corp::M::Client::Group;
+CREATE client_groups Fina::Corp::M::Client::Group
 ID
 FF
 client_id integer NN U1 FK-clients-id-Fina::Corp::M::Client-client

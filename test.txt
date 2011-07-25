@@ -1,268 +1,284 @@
-FILE: 9000-Fina_Corp_M_Client_Group_DisplayType.t
-#!/usr/local/bin/perl
+FILE: Fina::Corp::M::Client::Group
+
 #
 #
 #
+#############################################################################
+package Fina::Corp::M::Client::Group;
+
 use strict;
-use warnings; 
+use warnings;
 
-use Test::More tests => 6;
+use base qw( Fina::Corp::M );
 
-our $class;
-BEGIN {
-    my $base_class = 'Fina::Corp';
-    $class = $base_class.'::M::Client::Group::DisplayType';
-    use_ok($class);
-}
-
-isa_ok($class, 'Rose::DB::Object');
-
-my @columns = qw(
-    id
-    date_created
-    created_by
-    last_modified
-    modified_by
-    name
-    display_label
-);
-
-my @foreign_keys = qw(
-);
-
-my @relationships = qw(
-    groups
-);
-
-push @relationships, @foreign_keys;
-
-my @methods = qw{
-    manage_description
-};
-
-can_ok($class, ( @methods ));
-is_deeply([$class->meta->column_names], @columns, "Columns Defined as Expected");
-is_deeply([ sort (map { $_->name } @{$class->meta->foreign_keys}) ], [sort @foreign_keys], "Foreign Keys Defined as Expected");
-is_deeply([ sort (map { $_->name } @{$class->meta->relationships}) ], [sort @relationships], "Relationships Defined as Expected");
-
-
-
-FILE: 9001-Fina_Corp_M_Client_Group_Type.t
-#!/usr/local/bin/perl
+#############################################################################
 #
 #
 #
+__PACKAGE__->meta->setup(
+    table => 'client_groups',
+    columns => [
+        id                  => { type => 'serial', not_null => 1, primary_key => 1, sequence => client_groups_id_seq, },
+        date_created        => { type => 'timestamp', not_null => 1, default => 'now', },
+        created_by          => { type => 'varchar', not_null => 1, default => '', },
+        last_modified       => { type => 'timestamp', not_null => 1, },
+        modified_by         => { type => 'varchar', not_null => 1, default => '', },
+        client_id           => { type => 'integer', not_null => 1, },
+        owner_id            => { type => 'integer', },
+        name                => { type => 'varchar', not_null => 1, },
+        display_label       => { type => 'varchar', not_null => 1, },
+        display_image_url   => { type => 'varchar', not_null => 1, default => '', },
+        description         => { type => 'varchar', not_null => 1, default => '', },
+        group_type_id       => { type => 'integer', not_null => 1, },
+        value               => { type => 'varchar', not_null => 1, default => '', },
+        group_display_type_id=> { type => 'integer', not_null => 1, },
+        start_date          => { type => 'timestamp', },
+        end_date            => { type => 'timestamp', },
+    ],
+    unique_key => [ 'client_id', 'name', 'group_type_id' ],
+    foreign_keys => [
+        client => {
+            class => 'Fina::Corp::M::Client',
+            key_columns => {
+                client_id => 'id',
+            },
+        },
+        owner => {
+            class => 'Fina::Corp::M::Client::ClientPerson',
+            key_columns => {
+                owner_id => 'id',
+            },
+        },
+        group_type => {
+            class => 'Fina::Corp::M::Client::Group::Type',
+            key_columns => {
+                group_type_id => 'id',
+            },
+        },
+        group_display_type => {
+            class => 'Fina::Corp::M::Client::Group::DisplayType',
+            key_columns => {
+                group_display_type_id => 'id',
+            },
+        },
+    ],
+    relationships => [
+        ancestor_group => {
+            class => 'Fina::Corp::M::Client::Group::Path',
+            type => 'one to many',
+            key_columns => {
+                id => 'ancestor_group',
+            },
+        },
+        descendant_group => {
+            class => 'Fina::Corp::M::Client::Group::Path',
+            type => 'one to many',
+            key_columns => {
+                id => 'descendant_group',
+            },
+        },
+        group_person_map => {
+            class => 'Fina::Corp::M::Client::Group::PersonMap',
+            type => 'one to many',
+            key_columns => {
+                id => 'client_group',
+            },
+        },
+    ],
+);
+
+
+
+FILE: Fina::Corp::M::Client::Group::DisplayType
+
+#
+#
+#
+#############################################################################
+package Fina::Corp::M::Client::Group::DisplayType;
+
 use strict;
-use warnings; 
+use warnings;
 
-use Test::More tests => 6;
+use base qw( Fina::Corp::M );
 
-our $class;
-BEGIN {
-    my $base_class = 'Fina::Corp';
-    $class = $base_class.'::M::Client::Group::Type';
-    use_ok($class);
-}
-
-isa_ok($class, 'Rose::DB::Object');
-
-my @columns = qw(
-    id
-    date_created
-    created_by
-    last_modified
-    modified_by
-    name
-    display_label
-);
-
-my @foreign_keys = qw(
-);
-
-my @relationships = qw(
-    groups
-    groups_map
-);
-
-push @relationships, @foreign_keys;
-
-my @methods = qw{
-    manage_description
-};
-
-can_ok($class, ( @methods ));
-is_deeply([$class->meta->column_names], @columns, "Columns Defined as Expected");
-is_deeply([ sort (map { $_->name } @{$class->meta->foreign_keys}) ], [sort @foreign_keys], "Foreign Keys Defined as Expected");
-is_deeply([ sort (map { $_->name } @{$class->meta->relationships}) ], [sort @relationships], "Relationships Defined as Expected");
-
-
-
-FILE: 9002-Fina_Corp_M_Client_Group;.t
-#!/usr/local/bin/perl
+#############################################################################
 #
 #
 #
+__PACKAGE__->meta->setup(
+    table => 'client_group_display_types',
+    columns => [
+        id                  => { type => 'serial', not_null => 1, primary_key => 1, sequence => client_group_display_types_id_seq, },
+        date_created        => { type => 'timestamp', not_null => 1, default => 'now', },
+        created_by          => { type => 'varchar', not_null => 1, default => '', },
+        last_modified       => { type => 'timestamp', not_null => 1, },
+        modified_by         => { type => 'varchar', not_null => 1, default => '', },
+        name                => { type => 'varchar', not_null => 1, },
+        display_label       => { type => 'varchar', not_null => 1, },
+    ],
+    relationships => [
+        groups => {
+            class => 'Fina::Corp::M::Client::Group',
+            type => 'one to many',
+            key_columns => {
+                id => 'client_group_display_type_id',
+            },
+        },
+    ],
+);
+
+
+
+FILE: Fina::Corp::M::Client::Group::Path
+
+#
+#
+#
+#############################################################################
+package Fina::Corp::M::Client::Group::Path;
+
 use strict;
-use warnings; 
+use warnings;
 
-use Test::More tests => 6;
+use base qw( Fina::Corp::M );
 
-our $class;
-BEGIN {
-    my $base_class = 'Fina::Corp';
-    $class = $base_class.'::M::Client::Group;';
-    use_ok($class);
-}
-
-isa_ok($class, 'Rose::DB::Object');
-
-my @columns = qw(
-    id
-    date_created
-    created_by
-    last_modified
-    modified_by
-    client_id
-    owner_id
-    name
-    display_label
-    display_image_url
-    description
-    group_type_id
-    value
-    group_display_type_id
-    start_date
-    end_date
-);
-
-my @foreign_keys = qw(
-    client
-    owner
-    group_type
-    group_display_type
-);
-
-my @relationships = qw(
-    ancestor_group
-    descendant_group
-    group_person_map
-);
-
-push @relationships, @foreign_keys;
-
-my @methods = qw{
-    manage_description
-};
-
-can_ok($class, ( @methods ));
-is_deeply([$class->meta->column_names], @columns, "Columns Defined as Expected");
-is_deeply([ sort (map { $_->name } @{$class->meta->foreign_keys}) ], [sort @foreign_keys], "Foreign Keys Defined as Expected");
-is_deeply([ sort (map { $_->name } @{$class->meta->relationships}) ], [sort @relationships], "Relationships Defined as Expected");
-
-
-
-FILE: 9003-Fina_Corp_M_Client_Group_Path.t
-#!/usr/local/bin/perl
+#############################################################################
 #
 #
 #
+__PACKAGE__->meta->setup(
+    table => 'client_group_paths',
+    columns => [
+        date_created        => { type => 'timestamp', not_null => 1, default => 'now', },
+        created_by          => { type => 'varchar', not_null => 1, default => '', },
+        last_modified       => { type => 'timestamp', not_null => 1, },
+        modified_by         => { type => 'varchar', not_null => 1, default => '', },
+        ancestor_group_id   => { type => 'integer', not_null => 1, },
+        descendant_group_id => { type => 'integer', not_null => 1, },
+        depth               => { type => 'integer', },
+    ],
+    primary_key_columns => ['ancestor_group_id', 'descendant_group_id']
+    unique_key => [ 'descendant_group_id', 'depth' ],
+    foreign_keys => [
+        ancestor_group => {
+            class => 'Fina::Corp::M::Client::Group',
+            key_columns => {
+                ancestor_group_id => 'id',
+            },
+        },
+        descendant_group => {
+            class => 'Fina::Corp::M::Client::Group',
+            key_columns => {
+                descendant_group_id => 'id',
+            },
+        },
+    ],
+);
+
+
+
+FILE: Fina::Corp::M::Client::Group::PersonMap
+
+#
+#
+#
+#############################################################################
+package Fina::Corp::M::Client::Group::PersonMap;
+
 use strict;
-use warnings; 
+use warnings;
 
-use Test::More tests => 6;
+use base qw( Fina::Corp::M );
 
-our $class;
-BEGIN {
-    my $base_class = 'Fina::Corp';
-    $class = $base_class.'::M::Client::Group::Path';
-    use_ok($class);
-}
-
-isa_ok($class, 'Rose::DB::Object');
-
-my @columns = qw(
-    date_created
-    created_by
-    last_modified
-    modified_by
-    ancestor_group_id
-    descendant_group_id
-    depth
-);
-
-my @foreign_keys = qw(
-    ancestor_group
-    descendant_group
-);
-
-my @relationships = qw(
-);
-
-push @relationships, @foreign_keys;
-
-my @methods = qw{
-    manage_description
-};
-
-can_ok($class, ( @methods ));
-is_deeply([$class->meta->column_names], @columns, "Columns Defined as Expected");
-is_deeply([ sort (map { $_->name } @{$class->meta->foreign_keys}) ], [sort @foreign_keys], "Foreign Keys Defined as Expected");
-is_deeply([ sort (map { $_->name } @{$class->meta->relationships}) ], [sort @relationships], "Relationships Defined as Expected");
-
-
-
-FILE: 9004-Fina_Corp_M_Client_Group_PersonMap.t
-#!/usr/local/bin/perl
+#############################################################################
 #
 #
 #
+__PACKAGE__->meta->setup(
+    table => 'client_group_person_map',
+    columns => [
+        id                  => { type => 'serial', not_null => 1, primary_key => 1, sequence => client_group_person_map_id_seq, },
+        date_created        => { type => 'timestamp', not_null => 1, default => 'now', },
+        created_by          => { type => 'varchar', not_null => 1, default => '', },
+        last_modified       => { type => 'timestamp', not_null => 1, },
+        modified_by         => { type => 'varchar', not_null => 1, default => '', },
+        client_person_id    => { type => 'integer', not_null => 1, },
+        client_group_id     => { type => 'integer', not_null => 1, },
+        client_group_type_id=> { type => 'integer', not_null => 1, },
+        start_date          => { type => 'timestamp', },
+        end_date            => { type => 'timestamp', },
+        explicit            => { type => 'boolean', default => 'false', },
+    ],
+    foreign_keys => [
+        client_person => {
+            class => 'Fina::Corp::M::Client::ClientPerson',
+            key_columns => {
+                client_person_id => 'id',
+            },
+        },
+        client_group => {
+            class => 'Fina::Corp::M::Client::Group',
+            key_columns => {
+                client_group_id => 'id',
+            },
+        },
+        client_group_type => {
+            class => 'Fina::Corp::M::Client::Group::Type',
+            key_columns => {
+                client_group_type_id => 'id',
+            },
+        },
+    ],
+);
+
+
+
+FILE: Fina::Corp::M::Client::Group::Type
+
+#
+#
+#
+#############################################################################
+package Fina::Corp::M::Client::Group::Type;
+
 use strict;
-use warnings; 
+use warnings;
 
-use Test::More tests => 6;
+use base qw( Fina::Corp::M );
 
-our $class;
-BEGIN {
-    my $base_class = 'Fina::Corp';
-    $class = $base_class.'::M::Client::Group::PersonMap';
-    use_ok($class);
-}
-
-isa_ok($class, 'Rose::DB::Object');
-
-my @columns = qw(
-    id
-    date_created
-    created_by
-    last_modified
-    modified_by
-    client_person_id
-    client_group_id
-    client_group_type_id
-    start_date
-    end_date
-    explicit
+#############################################################################
+#
+#
+#
+__PACKAGE__->meta->setup(
+    table => 'client_group_types',
+    columns => [
+        id                  => { type => 'serial', not_null => 1, primary_key => 1, sequence => client_group_types_id_seq, },
+        date_created        => { type => 'timestamp', not_null => 1, default => 'now', },
+        created_by          => { type => 'varchar', not_null => 1, default => '', },
+        last_modified       => { type => 'timestamp', not_null => 1, },
+        modified_by         => { type => 'varchar', not_null => 1, default => '', },
+        name                => { type => 'varchar', not_null => 1, },
+        display_label       => { type => 'varchar', not_null => 1, },
+    ],
+    relationships => [
+        groups => {
+            class => 'Fina::Corp::M::Client::Group',
+            type => 'one to many',
+            key_columns => {
+                id => 'group_type_id',
+            },
+        },
+        groups_map => {
+            class => 'Fina::Corp::M::Client::Group::PersonMap',
+            type => 'one to many',
+            key_columns => {
+                id => 'client_group_type_id',
+            },
+        },
+    ],
 );
-
-my @foreign_keys = qw(
-    client_person
-    client_group
-    client_group_type
-);
-
-my @relationships = qw(
-);
-
-push @relationships, @foreign_keys;
-
-my @methods = qw{
-    manage_description
-};
-
-can_ok($class, ( @methods ));
-is_deeply([$class->meta->column_names], @columns, "Columns Defined as Expected");
-is_deeply([ sort (map { $_->name } @{$class->meta->foreign_keys}) ], [sort @foreign_keys], "Foreign Keys Defined as Expected");
-is_deeply([ sort (map { $_->name } @{$class->meta->relationships}) ], [sort @relationships], "Relationships Defined as Expected");
 
 
 
