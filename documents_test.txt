@@ -1,0 +1,950 @@
+BEGIN;
+
+\echo Creating tables.
+
+CREATE TABLE document_contents(
+    id SERIAL PRIMARY KEY NOT NULL,
+    date_created TIMESTAMP NOT NULL DEFAULT timeofday()::TIMESTAMP,
+    created_by VARCHAR NOT NULL DEFAULT '',
+    last_modified TIMESTAMP NOT NULL,
+    modified_by VARCHAR NOT NULL DEFAULT '',
+    document_authored_id INTEGER,,
+    content_type_id INTEGER,
+    content VARCHAR,
+    language_code VARCHAR NOT NULL,
+    translation_outdated BOOLEAN NOT NULL DEFAULT 'false',
+    autotranslated BOOLEAN NOT NULL DEFAULT 'false',
+    audited BOOLEAN NOT NULL DEFAULT 'false',
+    CONSTRAINT fk_document_authored_id FOREIGN KEY (document_authored_id) REFERENCES client_authored_documents (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_content_type_id FOREIGN KEY (content_type_id) REFERENCES document_content_types (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_language_code FOREIGN KEY (language_code) REFERENCES languages (language_code) MATCH SIMPLE ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+CREATE TABLE document_content_types(
+    id SERIAL PRIMARY KEY NOT NULL,
+    date_created TIMESTAMP NOT NULL DEFAULT timeofday()::TIMESTAMP,
+    created_by VARCHAR NOT NULL DEFAULT '',
+    last_modified TIMESTAMP NOT NULL,
+    modified_by VARCHAR NOT NULL DEFAULT '',
+    name VARCHAR NOT NULL,
+    display_label VARCHAR NOT NULL,
+    content_type VARCHAR NOT NULL
+);
+
+CREATE TABLE document_content_templates(
+    id SERIAL PRIMARY KEY NOT NULL,
+    date_created TIMESTAMP NOT NULL DEFAULT timeofday()::TIMESTAMP,
+    created_by VARCHAR NOT NULL DEFAULT '',
+    last_modified TIMESTAMP NOT NULL,
+    modified_by VARCHAR NOT NULL DEFAULT '',
+    name VARCHAR NOT NULL,
+    display_label VARCHAR NOT NULL
+);
+
+CREATE TABLE document_content_template_map(
+    date_created TIMESTAMP NOT NULL DEFAULT timeofday()::TIMESTAMP,
+    created_by VARCHAR NOT NULL DEFAULT '',
+    last_modified TIMESTAMP NOT NULL,
+    modified_by VARCHAR NOT NULL DEFAULT '',
+    content_template_id INTEGER NOT NULL,
+    content_type_id INTEGER NOT NULL,
+    CONSTRAINT pk_document_content_template_map PRIMARY KEY ( content_template_id, content_type_id ),
+    CONSTRAINT fk_content_template_id FOREIGN KEY (content_template_id) REFERENCES document_content_templates (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_content_type_id FOREIGN KEY (content_type_id) REFERENCES document_content_types (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+CREATE TABLE client_authored_documents(
+    id SERIAL PRIMARY KEY NOT NULL,
+    date_created TIMESTAMP NOT NULL DEFAULT timeofday()::TIMESTAMP,
+    created_by VARCHAR NOT NULL DEFAULT '',
+    last_modified TIMESTAMP NOT NULL,
+    modified_by VARCHAR NOT NULL DEFAULT '',
+    client_id INTEGER,
+    name VARCHAR NOT NULL,
+    start_date TIMESTAMP,
+    end_date TIMESTAMP,
+    approval_status VARCHAR,
+    approval_date TIMESTAMP,
+    CONSTRAINT fk_client_id FOREIGN KEY (client_id) REFERENCES clients (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+CREATE TABLE client_authored_document_usages(
+    id SERIAL PRIMARY KEY NOT NULL,
+    date_created TIMESTAMP NOT NULL DEFAULT timeofday()::TIMESTAMP,
+    created_by VARCHAR NOT NULL DEFAULT '',
+    last_modified TIMESTAMP NOT NULL,
+    modified_by VARCHAR NOT NULL DEFAULT '',
+    usage_code VARCHAR NOT NULL,
+    description VARCHAR,
+    trigger_code VARCHAR
+);
+
+CREATE TABLE client_authored_document_usage_map(
+    date_created TIMESTAMP NOT NULL DEFAULT timeofday()::TIMESTAMP,
+    created_by VARCHAR NOT NULL DEFAULT '',
+    last_modified TIMESTAMP NOT NULL,
+    modified_by VARCHAR NOT NULL DEFAULT '',
+    usage_code VARCHAR NOT NULL,
+    document_authored_id INTEGER NOT NULL,
+    CONSTRAINT pk_client_authored_document_usage_map PRIMARY KEY ( usage_code, document_authored_id ),
+    CONSTRAINT fk_usage_code FOREIGN KEY (usage_code) REFERENCES client_authored_document_usages (usage_code) MATCH SIMPLE ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_document_authored_id FOREIGN KEY (document_authored_id) REFERENCES client_authored_documents (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+\echo Table creation complete.
+
+\echo Creating triggers.
+
+CREATE TRIGGER document_contents_last_modified
+    BEFORE INSERT OR UPDATE ON document_contents
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_last_modified()
+;
+CREATE TRIGGER document_content_types_last_modified
+    BEFORE INSERT OR UPDATE ON document_content_types
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_last_modified()
+;
+CREATE TRIGGER document_content_templates_last_modified
+    BEFORE INSERT OR UPDATE ON document_content_templates
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_last_modified()
+;
+CREATE TRIGGER document_content_template_map_last_modified
+    BEFORE INSERT OR UPDATE ON document_content_template_map
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_last_modified()
+;
+CREATE TRIGGER client_authored_documents_last_modified
+    BEFORE INSERT OR UPDATE ON client_authored_documents
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_last_modified()
+;
+CREATE TRIGGER client_authored_document_usages_last_modified
+    BEFORE INSERT OR UPDATE ON client_authored_document_usages
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_last_modified()
+;
+CREATE TRIGGER client_authored_document_usage_map_last_modified
+    BEFORE INSERT OR UPDATE ON client_authored_document_usage_map
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_last_modified()
+;
+
+\echo Trigger creation complete.
+
+
+--ROLLBACK;
+COMMIT;
+
+
+***********************************************
+
+FILE: 9000-Fina_Corp_M_Document_Content.t
+#!/usr/local/bin/perl
+#
+#
+#
+use strict;
+use warnings; 
+
+use Test::More tests => 6;
+
+our $class;
+BEGIN {
+    my $base_class = 'Fina::Corp';
+    $class = $base_class.'::M::Document::Content';
+    use_ok($class);
+}
+
+isa_ok($class, 'Rose::DB::Object');
+
+my @columns = qw(
+    id
+    date_created
+    created_by
+    last_modified
+    modified_by
+    document_authored_id
+    content_type_id
+    content
+    language_code
+    translation_outdated
+    autotranslated
+    audited
+);
+
+my @foreign_keys = qw(
+    document
+    content_type
+    language
+);
+
+my @relationships = qw(
+);
+
+push @relationships, @foreign_keys;
+
+my @methods = qw{
+    manage_description
+};
+
+can_ok($class, ( @methods ));
+is_deeply([$class->meta->column_names], @columns, "Columns Defined as Expected");
+is_deeply([ sort (map { $_->name } @{$class->meta->foreign_keys}) ], [sort @foreign_keys], "Foreign Keys Defined as Expected");
+is_deeply([ sort (map { $_->name } @{$class->meta->relationships}) ], [sort @relationships], "Relationships Defined as Expected");
+
+
+
+FILE: 9001-Fina_Corp_M_Document_Content_Type.t
+#!/usr/local/bin/perl
+#
+#
+#
+use strict;
+use warnings; 
+
+use Test::More tests => 6;
+
+our $class;
+BEGIN {
+    my $base_class = 'Fina::Corp';
+    $class = $base_class.'::M::Document::Content::Type';
+    use_ok($class);
+}
+
+isa_ok($class, 'Rose::DB::Object');
+
+my @columns = qw(
+    id
+    date_created
+    created_by
+    last_modified
+    modified_by
+    name
+    display_label
+    content_type
+);
+
+my @foreign_keys = qw(
+);
+
+my @relationships = qw(
+);
+
+push @relationships, @foreign_keys;
+
+my @methods = qw{
+    manage_description
+};
+
+can_ok($class, ( @methods ));
+is_deeply([$class->meta->column_names], @columns, "Columns Defined as Expected");
+is_deeply([ sort (map { $_->name } @{$class->meta->foreign_keys}) ], [sort @foreign_keys], "Foreign Keys Defined as Expected");
+is_deeply([ sort (map { $_->name } @{$class->meta->relationships}) ], [sort @relationships], "Relationships Defined as Expected");
+
+
+
+FILE: 9002-Fina_Corp_M_Document_Content_Template.t
+#!/usr/local/bin/perl
+#
+#
+#
+use strict;
+use warnings; 
+
+use Test::More tests => 6;
+
+our $class;
+BEGIN {
+    my $base_class = 'Fina::Corp';
+    $class = $base_class.'::M::Document::Content::Template';
+    use_ok($class);
+}
+
+isa_ok($class, 'Rose::DB::Object');
+
+my @columns = qw(
+    id
+    date_created
+    created_by
+    last_modified
+    modified_by
+    name
+    display_label
+);
+
+my @foreign_keys = qw(
+);
+
+my @relationships = qw(
+    template_set
+);
+
+push @relationships, @foreign_keys;
+
+my @methods = qw{
+    manage_description
+};
+
+can_ok($class, ( @methods ));
+is_deeply([$class->meta->column_names], @columns, "Columns Defined as Expected");
+is_deeply([ sort (map { $_->name } @{$class->meta->foreign_keys}) ], [sort @foreign_keys], "Foreign Keys Defined as Expected");
+is_deeply([ sort (map { $_->name } @{$class->meta->relationships}) ], [sort @relationships], "Relationships Defined as Expected");
+
+
+
+FILE: 9003-Fina_Corp_M_Document_Content_TemplateMap.t
+#!/usr/local/bin/perl
+#
+#
+#
+use strict;
+use warnings; 
+
+use Test::More tests => 6;
+
+our $class;
+BEGIN {
+    my $base_class = 'Fina::Corp';
+    $class = $base_class.'::M::Document::Content::TemplateMap';
+    use_ok($class);
+}
+
+isa_ok($class, 'Rose::DB::Object');
+
+my @columns = qw(
+    date_created
+    created_by
+    last_modified
+    modified_by
+    content_template_id
+    content_type_id
+);
+
+my @foreign_keys = qw(
+    content_template
+    content_type
+);
+
+my @relationships = qw(
+);
+
+push @relationships, @foreign_keys;
+
+my @methods = qw{
+    manage_description
+};
+
+can_ok($class, ( @methods ));
+is_deeply([$class->meta->column_names], @columns, "Columns Defined as Expected");
+is_deeply([ sort (map { $_->name } @{$class->meta->foreign_keys}) ], [sort @foreign_keys], "Foreign Keys Defined as Expected");
+is_deeply([ sort (map { $_->name } @{$class->meta->relationships}) ], [sort @relationships], "Relationships Defined as Expected");
+
+
+
+FILE: 9004-Fina_Corp_M_Client_Document_Authored.t
+#!/usr/local/bin/perl
+#
+#
+#
+use strict;
+use warnings; 
+
+use Test::More tests => 6;
+
+our $class;
+BEGIN {
+    my $base_class = 'Fina::Corp';
+    $class = $base_class.'::M::Client::Document::Authored';
+    use_ok($class);
+}
+
+isa_ok($class, 'Rose::DB::Object');
+
+my @columns = qw(
+    id
+    date_created
+    created_by
+    last_modified
+    modified_by
+    client_id
+    name
+    start_date
+    end_date
+    approval_status
+    approval_date
+);
+
+my @foreign_keys = qw(
+    client
+);
+
+my @relationships = qw(
+    document_content_details
+);
+
+push @relationships, @foreign_keys;
+
+my @methods = qw{
+    manage_description
+};
+
+can_ok($class, ( @methods ));
+is_deeply([$class->meta->column_names], @columns, "Columns Defined as Expected");
+is_deeply([ sort (map { $_->name } @{$class->meta->foreign_keys}) ], [sort @foreign_keys], "Foreign Keys Defined as Expected");
+is_deeply([ sort (map { $_->name } @{$class->meta->relationships}) ], [sort @relationships], "Relationships Defined as Expected");
+
+
+
+FILE: 9005-Fina_Corp_M_Client_Document_Usage.t
+#!/usr/local/bin/perl
+#
+#
+#
+use strict;
+use warnings; 
+
+use Test::More tests => 6;
+
+our $class;
+BEGIN {
+    my $base_class = 'Fina::Corp';
+    $class = $base_class.'::M::Client::Document::Usage';
+    use_ok($class);
+}
+
+isa_ok($class, 'Rose::DB::Object');
+
+my @columns = qw(
+    id
+    date_created
+    created_by
+    last_modified
+    modified_by
+    usage_code
+    description
+    trigger_code
+);
+
+my @foreign_keys = qw(
+);
+
+my @relationships = qw(
+    authored_documents
+);
+
+push @relationships, @foreign_keys;
+
+my @methods = qw{
+    manage_description
+};
+
+can_ok($class, ( @methods ));
+is_deeply([$class->meta->column_names], @columns, "Columns Defined as Expected");
+is_deeply([ sort (map { $_->name } @{$class->meta->foreign_keys}) ], [sort @foreign_keys], "Foreign Keys Defined as Expected");
+is_deeply([ sort (map { $_->name } @{$class->meta->relationships}) ], [sort @relationships], "Relationships Defined as Expected");
+
+
+
+FILE: 9006-Fina_Corp_M_Document_UsageMap.t
+#!/usr/local/bin/perl
+#
+#
+#
+use strict;
+use warnings; 
+
+use Test::More tests => 6;
+
+our $class;
+BEGIN {
+    my $base_class = 'Fina::Corp';
+    $class = $base_class.'::M::Document::UsageMap';
+    use_ok($class);
+}
+
+isa_ok($class, 'Rose::DB::Object');
+
+my @columns = qw(
+    date_created
+    created_by
+    last_modified
+    modified_by
+    usage_code
+    document_authored_id
+);
+
+my @foreign_keys = qw(
+    usage
+    document_authored
+);
+
+my @relationships = qw(
+);
+
+push @relationships, @foreign_keys;
+
+my @methods = qw{
+    manage_description
+};
+
+can_ok($class, ( @methods ));
+is_deeply([$class->meta->column_names], @columns, "Columns Defined as Expected");
+is_deeply([ sort (map { $_->name } @{$class->meta->foreign_keys}) ], [sort @foreign_keys], "Foreign Keys Defined as Expected");
+is_deeply([ sort (map { $_->name } @{$class->meta->relationships}) ], [sort @relationships], "Relationships Defined as Expected");
+
+
+
+
+
+***********************************************
+
+FILE: Fina::Corp::M::Client::Document::Authored
+
+#
+#
+#
+#############################################################################
+package Fina::Corp::M::Client::Document::Authored;
+
+use strict;
+use warnings;
+
+use base qw( Fina::Corp::M );
+
+#############################################################################
+#
+#
+#
+__PACKAGE__->meta->setup(
+    table => 'client_authored_documents',
+    columns => [
+        id                  => { type => 'serial', not_null => 1, primary_key => 1, sequence => client_authored_documents_id_seq, },
+        date_created        => { type => 'timestamp', not_null => 1, default => 'now', },
+        created_by          => { type => 'varchar', not_null => 1, default => '', },
+        last_modified       => { type => 'timestamp', not_null => 1, },
+        modified_by         => { type => 'varchar', not_null => 1, default => '', },
+        client_id           => { type => 'integer', },
+        name                => { type => 'varchar', not_null => 1, },
+        start_date          => { type => 'timestamp', },
+        end_date            => { type => 'timestamp', },
+        approval_status     => { type => 'varchar', },
+        approval_date       => { type => 'timestamp', },
+    ],
+    foreign_keys => [
+        client => {
+            class => 'Fina::Corp::M::Client',
+            key_columns => {
+                client_id => 'id',
+            },
+        },
+    ],
+    relationships => [
+        document_content_details => {
+            type => 'one to many',
+            class => 'Fina::Corp::M::Document::Content',
+            key_columns => {
+                id => 'document_authored_id',
+            },
+        },
+    ],
+);
+
+sub manage_description {
+    my $self = shift;
+    return ($self->id FILL ME IN || 'Unknown OBJECT');
+}
+
+package package Fina::Corp::M::Client::Document::Authored::Manager;
+
+use base qw( Fina::Corp::M::Manager );
+
+sub object_class { 'Fina::Corp::M::Client::Document::Authored' };
+
+__PACKAGE__->make_manager_methods('instances');
+
+1;
+
+
+#############################################################################
+__END__
+
+
+
+FILE: Fina::Corp::M::Client::Document::Usage
+
+#
+#
+#
+#############################################################################
+package Fina::Corp::M::Client::Document::Usage;
+
+use strict;
+use warnings;
+
+use base qw( Fina::Corp::M );
+
+#############################################################################
+#
+#
+#
+__PACKAGE__->meta->setup(
+    table => 'client_authored_document_usages',
+    columns => [
+        id                  => { type => 'serial', not_null => 1, primary_key => 1, sequence => client_authored_document_usages_id_seq, },
+        date_created        => { type => 'timestamp', not_null => 1, default => 'now', },
+        created_by          => { type => 'varchar', not_null => 1, default => '', },
+        last_modified       => { type => 'timestamp', not_null => 1, },
+        modified_by         => { type => 'varchar', not_null => 1, default => '', },
+        usage_code          => { type => 'varchar', not_null => 1, },
+        description         => { type => 'varchar', },
+        trigger_code        => { type => 'varchar', },
+    ],
+    relationships => [
+        authored_documents => {
+            type => 'many to many',
+            map_class => 'Fina::Corp::M::Document::UsageMap',
+        },
+    ],
+);
+
+sub manage_description {
+    my $self = shift;
+    return ($self->id FILL ME IN || 'Unknown OBJECT');
+}
+
+package package Fina::Corp::M::Client::Document::Usage::Manager;
+
+use base qw( Fina::Corp::M::Manager );
+
+sub object_class { 'Fina::Corp::M::Client::Document::Usage' };
+
+__PACKAGE__->make_manager_methods('instances');
+
+1;
+
+
+#############################################################################
+__END__
+
+
+
+FILE: Fina::Corp::M::Document::Content
+
+#
+#
+#
+#############################################################################
+package Fina::Corp::M::Document::Content;
+
+use strict;
+use warnings;
+
+use base qw( Fina::Corp::M );
+
+#############################################################################
+#
+#
+#
+__PACKAGE__->meta->setup(
+    table => 'document_contents',
+    columns => [
+        id                  => { type => 'serial', not_null => 1, primary_key => 1, sequence => document_contents_id_seq, },
+        date_created        => { type => 'timestamp', not_null => 1, default => 'now', },
+        created_by          => { type => 'varchar', not_null => 1, default => '', },
+        last_modified       => { type => 'timestamp', not_null => 1, },
+        modified_by         => { type => 'varchar', not_null => 1, default => '', },
+        document_authored_id=> { type => 'integer,', },
+        content_type_id     => { type => 'integer', },
+        content             => { type => 'varchar', },
+        language_code       => { type => 'varchar', not_null => 1, },
+        translation_outdated=> { type => 'boolean', not_null => 1, default => ''false'', },
+        autotranslated      => { type => 'boolean', not_null => 1, default => ''false'', },
+        audited             => { type => 'boolean', not_null => 1, default => ''false'', },
+    ],
+    foreign_keys => [
+        document => {
+            class => 'Fina::Corp::M::Client::Document::Authored',
+            key_columns => {
+                document_authored_id => 'id',
+            },
+        },
+        content_type => {
+            class => 'Fina::Corp::M::Document::Content::Type',
+            key_columns => {
+                content_type_id => 'id',
+            },
+        },
+        language => {
+            class => 'Fina::Corp::M::Language',
+            key_columns => {
+                language_code => 'language_code',
+            },
+        },
+    ],
+);
+
+sub manage_description {
+    my $self = shift;
+    return ($self->id FILL ME IN || 'Unknown OBJECT');
+}
+
+package package Fina::Corp::M::Document::Content::Manager;
+
+use base qw( Fina::Corp::M::Manager );
+
+sub object_class { 'Fina::Corp::M::Document::Content' };
+
+__PACKAGE__->make_manager_methods('instances');
+
+1;
+
+
+#############################################################################
+__END__
+
+
+
+FILE: Fina::Corp::M::Document::Content::Template
+
+#
+#
+#
+#############################################################################
+package Fina::Corp::M::Document::Content::Template;
+
+use strict;
+use warnings;
+
+use base qw( Fina::Corp::M );
+
+#############################################################################
+#
+#
+#
+__PACKAGE__->meta->setup(
+    table => 'document_content_templates',
+    columns => [
+        id                  => { type => 'serial', not_null => 1, primary_key => 1, sequence => document_content_templates_id_seq, },
+        date_created        => { type => 'timestamp', not_null => 1, default => 'now', },
+        created_by          => { type => 'varchar', not_null => 1, default => '', },
+        last_modified       => { type => 'timestamp', not_null => 1, },
+        modified_by         => { type => 'varchar', not_null => 1, default => '', },
+        name                => { type => 'varchar', not_null => 1, },
+        display_label       => { type => 'varchar', not_null => 1, },
+    ],
+    relationships => [
+        template_set => {
+            type => 'one to many',
+            class => 'Fina::Corp::M::Document::Content::TemplateMap',
+            key_columns => {
+                id => 'content_template_id',
+            },
+        },
+    ],
+);
+
+sub manage_description {
+    my $self = shift;
+    return ($self->id FILL ME IN || 'Unknown OBJECT');
+}
+
+package package Fina::Corp::M::Document::Content::Template::Manager;
+
+use base qw( Fina::Corp::M::Manager );
+
+sub object_class { 'Fina::Corp::M::Document::Content::Template' };
+
+__PACKAGE__->make_manager_methods('instances');
+
+1;
+
+
+#############################################################################
+__END__
+
+
+
+FILE: Fina::Corp::M::Document::Content::TemplateMap
+
+#
+#
+#
+#############################################################################
+package Fina::Corp::M::Document::Content::TemplateMap;
+
+use strict;
+use warnings;
+
+use base qw( Fina::Corp::M );
+
+#############################################################################
+#
+#
+#
+__PACKAGE__->meta->setup(
+    table => 'document_content_template_map',
+    columns => [
+        date_created        => { type => 'timestamp', not_null => 1, default => 'now', },
+        created_by          => { type => 'varchar', not_null => 1, default => '', },
+        last_modified       => { type => 'timestamp', not_null => 1, },
+        modified_by         => { type => 'varchar', not_null => 1, default => '', },
+        content_template_id => { type => 'integer', not_null => 1, },
+        content_type_id     => { type => 'integer', not_null => 1, },
+    ],
+    primary_key_columns => ['content_template_id', 'content_type_id']
+    foreign_keys => [
+        content_template => {
+            class => 'Fina::Corp::M::Document::Content::Template',
+            key_columns => {
+                content_template_id => 'id',
+            },
+        },
+        content_type => {
+            class => 'Fina::Corp::M::Document::Content::Type',
+            key_columns => {
+                content_type_id => 'id',
+            },
+        },
+    ],
+);
+
+sub manage_description {
+    my $self = shift;
+    return ($self->id FILL ME IN || 'Unknown OBJECT');
+}
+
+package package Fina::Corp::M::Document::Content::TemplateMap::Manager;
+
+use base qw( Fina::Corp::M::Manager );
+
+sub object_class { 'Fina::Corp::M::Document::Content::TemplateMap' };
+
+__PACKAGE__->make_manager_methods('instances');
+
+1;
+
+
+#############################################################################
+__END__
+
+
+
+FILE: Fina::Corp::M::Document::Content::Type
+
+#
+#
+#
+#############################################################################
+package Fina::Corp::M::Document::Content::Type;
+
+use strict;
+use warnings;
+
+use base qw( Fina::Corp::M );
+
+#############################################################################
+#
+#
+#
+__PACKAGE__->meta->setup(
+    table => 'document_content_types',
+    columns => [
+        id                  => { type => 'serial', not_null => 1, primary_key => 1, sequence => document_content_types_id_seq, },
+        date_created        => { type => 'timestamp', not_null => 1, default => 'now', },
+        created_by          => { type => 'varchar', not_null => 1, default => '', },
+        last_modified       => { type => 'timestamp', not_null => 1, },
+        modified_by         => { type => 'varchar', not_null => 1, default => '', },
+        name                => { type => 'varchar', not_null => 1, },
+        display_label       => { type => 'varchar', not_null => 1, },
+        content_type        => { type => 'varchar', not_null => 1, },
+    ],
+);
+
+sub manage_description {
+    my $self = shift;
+    return ($self->id FILL ME IN || 'Unknown OBJECT');
+}
+
+package package Fina::Corp::M::Document::Content::Type::Manager;
+
+use base qw( Fina::Corp::M::Manager );
+
+sub object_class { 'Fina::Corp::M::Document::Content::Type' };
+
+__PACKAGE__->make_manager_methods('instances');
+
+1;
+
+
+#############################################################################
+__END__
+
+
+
+FILE: Fina::Corp::M::Document::UsageMap
+
+#
+#
+#
+#############################################################################
+package Fina::Corp::M::Document::UsageMap;
+
+use strict;
+use warnings;
+
+use base qw( Fina::Corp::M );
+
+#############################################################################
+#
+#
+#
+__PACKAGE__->meta->setup(
+    table => 'client_authored_document_usage_map',
+    columns => [
+        date_created        => { type => 'timestamp', not_null => 1, default => 'now', },
+        created_by          => { type => 'varchar', not_null => 1, default => '', },
+        last_modified       => { type => 'timestamp', not_null => 1, },
+        modified_by         => { type => 'varchar', not_null => 1, default => '', },
+        usage_code          => { type => 'varchar', not_null => 1, },
+        document_authored_id=> { type => 'integer', not_null => 1, },
+    ],
+    primary_key_columns => ['usage_code', 'document_authored_id']
+    foreign_keys => [
+        usage => {
+            class => 'Fina::Corp::M::Client::Document::Usage',
+            key_columns => {
+                usage_code => 'usage_code',
+            },
+        },
+        document_authored => {
+            class => 'Fina::Corp::M::Client::Document::Authored',
+            key_columns => {
+                document_authored_id => 'id',
+            },
+        },
+    ],
+);
+
+sub manage_description {
+    my $self = shift;
+    return ($self->id FILL ME IN || 'Unknown OBJECT');
+}
+
+package package Fina::Corp::M::Document::UsageMap::Manager;
+
+use base qw( Fina::Corp::M::Manager );
+
+sub object_class { 'Fina::Corp::M::Document::UsageMap' };
+
+__PACKAGE__->make_manager_methods('instances');
+
+1;
+
+
+#############################################################################
+__END__
+
+
+

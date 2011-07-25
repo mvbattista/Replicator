@@ -1,0 +1,60 @@
+CREATE document_contents Fina::Corp::M::Document::Content
+ID
+FF
+document_authored_id integer, FK-client_authored_documents-id-Fina::Corp::M::Client::Document::Authored-document
+content_type_id integer FK-document_content_types-id-Fina::Corp::M::Document::Content::Type-content_type
+content varchar
+language_code varchar NN FK-languages-language_code-Fina::Corp::M::Language-language
+translation_outdated boolean NN D='false'
+autotranslated boolean NN D='false'
+audited boolean NN D='false'
+ENDTABLE
+
+CREATE document_content_types Fina::Corp::M::Document::Content::Type
+ID
+FF
+name varchar NN
+display_label varchar NN
+content_type varchar NN
+ENDTABLE
+
+CREATE document_content_templates Fina::Corp::M::Document::Content::Template
+ID
+FF
+name varchar NN
+display_label varchar NN
+RELATIONSHIP template_set 1* Fina::Corp::M::Document::Content::TemplateMap id content_template_id
+ENDTABLE
+
+CREATE document_content_template_map Fina::Corp::M::Document::Content::TemplateMap
+FF
+content_template_id integer NN P FK-document_content_templates-id-Fina::Corp::M::Document::Content::Template-content_template
+content_type_id integer NN P FK-document_content_types-id-Fina::Corp::M::Document::Content::Type-content_type
+ENDTABLE
+
+CREATE client_authored_documents Fina::Corp::M::Client::Document::Authored
+ID
+FF
+client_id integer FK-clients-id-Fina::Corp::M::Client-client
+name varchar NN
+start_date timestamp
+end_date timestamp
+approval_status varchar
+approval_date timestamp
+RELATIONSHIP document_content_details 1* Fina::Corp::M::Document::Content id document_authored_id
+ENDTABLE
+
+CREATE client_authored_document_usages Fina::Corp::M::Client::Document::Usage
+ID
+FF
+usage_code varchar NN
+description varchar
+trigger_code varchar
+RELATIONSHIP authored_documents ** Fina::Corp::M::Document::UsageMap
+ENDTABLE
+
+CREATE client_authored_document_usage_map Fina::Corp::M::Document::UsageMap
+FF
+usage_code varchar NN P FK-client_authored_document_usages-usage_code-Fina::Corp::M::Client::Document::Usage-usage
+document_authored_id integer NN P FK-client_authored_documents-id-Fina::Corp::M::Client::Document::Authored-document_authored
+ENDTABLE

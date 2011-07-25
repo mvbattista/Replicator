@@ -102,7 +102,7 @@ sub replicator_ddl_generator {
         }
         for my $i (@{$table->{constraints}}) {
             my $str = "    CONSTRAINT fk_".$i->{field}." FOREIGN KEY (".$i->{field}.
-                ") REFERENCES ".$i->{sql_table}." (".$i->{sql_column}.") MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE";
+                ") REFERENCES ".$i->{sql_table}." (".$i->{sql_column}.") MATCH SIMPLE ON UPDATE CASCADE ON DELETE RESTRICT";
             unless ($comma_count == 0) {
                 $str .= ",\n";
                 $comma_count--;

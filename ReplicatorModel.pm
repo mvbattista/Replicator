@@ -85,18 +85,46 @@ MODEL_text
 	   		$s .= sprintf "%srelationships => [\n", $t x 1;
     		for my $rel (@{$table->{relationships}}) {
 		    	$s .= sprintf "%s%s => {\n", $t x 2, $rel->{name};
-		    	$s .= sprintf "%sclass => '%s',\n", $t x 3, $rel->{class};
 		    	$s .= sprintf "%stype => '%s',\n", $t x 3, $rel->{type};
-	    		$s .= sprintf "%s%s => {\n", $t x 3, 'key_columns';
- 	    		$s .= sprintf "%s%s => '%s',\n", $t x 4, $rel->{column}, $rel->{foreign_column};
-	    		$s .= sprintf "%s},\n", $t x 3;
+                if ($rel->{type} eq 'one to many') {
+                    $s .= sprintf "%sclass => '%s',\n", $t x 3, $rel->{class};
+                    $s .= sprintf "%s%s => {\n", $t x 3, 'key_columns';
+                    $s .= sprintf "%s%s => '%s',\n", $t x 4, $rel->{column}, $rel->{foreign_column};
+                    $s .= sprintf "%s},\n", $t x 3;
+                }
+                elsif ($rel->{type} eq 'one to one') {
+                    $s .= sprintf "%s%s => {\n", $t x 3, 'column_map';
+                    $s .= sprintf "%s%s => '%s',\n", $t x 4, $rel->{column}, $rel->{foreign_column};
+                    $s .= sprintf "%s},\n", $t x 3;
+                }
+                elsif ($rel->{type} eq 'many to many') {
+                    $s .= sprintf "%smap_class => '%s',\n", $t x 3, $rel->{class};
+                }
     			$s .= sprintf "%s},\n", $t x 2;
    			}
     		$s .= sprintf "%s],\n", $t x 1;
 		}
 		$s .= ");\n\n";
-	
-		$result{$table->{class_name}} = $s;
+
+        $s .= "sub manage_description {\n    my \$self = shift;\n    return (\$self->id FILL ME IN || 'Unknown OBJECT');\n}\n\npackage ";
+        $s .=<<MODEL_MANAGER;
+package $table->{class_name}::Manager;
+
+use base qw( Fina::Corp::M::Manager );
+
+sub object_class { '$table->{class_name}' };
+
+__PACKAGE__->make_manager_methods('instances');
+
+1;
+
+
+#############################################################################
+__END__
+
+MODEL_MANAGER
+
+    $result{$table->{class_name}} = $s;
     }
 	return \%result;
 }
