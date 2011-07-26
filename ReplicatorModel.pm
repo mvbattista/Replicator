@@ -44,14 +44,14 @@ MODEL_text
 				$column->{default} ? ($column->{default} eq "''" ? "default => '', " : "default => '$column->{default}', "):"",
 				$column->{length} ? "length => $column->{length}, ":"",
 				($column->{primary_key} and scalar @{$table->{primary_key}} == 1) ? "primary_key => 1, ":"",
-				$column->{sequence} ? "sequence => $column->{sequence}, ":"",
+				$column->{sequence} ? "sequence => '$column->{sequence}', ":"",
 		}
 		$s .= "    ],\n";
 		if (scalar @{$table->{primary_key}} > 1) {
 			$s .= "    primary_key_columns => ['";
 			my $str = join("', '", @{$table->{primary_key}});
 			$s .= $str;
-			$s .= "']\n";
+			$s .= "'],\n";
 		}
 		if (scalar @{$table->{uniques}}) {
 			for my $u (@{$table->{uniques}}) {
@@ -106,7 +106,7 @@ MODEL_text
 		}
 		$s .= ");\n\n";
 
-        $s .= "sub manage_description {\n    my \$self = shift;\n    return (\$self->id FILL ME IN || 'Unknown OBJECT');\n}\n\npackage ";
+        $s .= "sub manage_description {\n    my \$self = shift;\n    return (\$self->id FILL ME IN || 'Unknown OBJECT');\n}\n\n";
         $s .=<<MODEL_MANAGER;
 package $table->{class_name}::Manager;
 

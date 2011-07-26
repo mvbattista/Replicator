@@ -77,7 +77,8 @@ CREATE TABLE client_authored_document_usages(
     modified_by VARCHAR NOT NULL DEFAULT '',
     usage_code VARCHAR NOT NULL,
     description VARCHAR,
-    trigger_code VARCHAR
+    trigger_code VARCHAR,
+     UNIQUE(usage_code)
 );
 
 CREATE TABLE client_authored_document_usage_map(
@@ -602,6 +603,7 @@ __PACKAGE__->meta->setup(
         description         => { type => 'varchar', },
         trigger_code        => { type => 'varchar', },
     ],
+    unique_key => [ 'usage_code' ],
     relationships => [
         authored_documents => {
             type => 'many to many',

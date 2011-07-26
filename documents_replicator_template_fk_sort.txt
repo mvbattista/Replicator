@@ -47,7 +47,7 @@ ENDTABLE
 CREATE client_authored_document_usages Fina::Corp::M::Client::Document::Usage
 ID
 FF
-usage_code varchar NN
+usage_code varchar NN U1
 description varchar
 trigger_code varchar
 RELATIONSHIP authored_documents ** Fina::Corp::M::Document::UsageMap
