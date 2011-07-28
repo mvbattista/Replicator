@@ -41,7 +41,7 @@ MODEL_text
 				$column->{name},
 				lc $column->{type},
 				$column->{not_null} ? "not_null => 1, ":"",
-				$column->{default} ? ($column->{default} eq "''" ? "default => '', " : "default => '$column->{default}', "):"",
+				$column->{default} ? ($column->{default} eq "''" ? "default => '', " : "default => $column->{default}, "):"",
 				$column->{length} ? "length => $column->{length}, ":"",
 				($column->{primary_key} and scalar @{$table->{primary_key}} == 1) ? "primary_key => 1, ":"",
 				$column->{sequence} ? "sequence => '$column->{sequence}', ":"",
