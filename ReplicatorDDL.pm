@@ -52,7 +52,7 @@ sub replicator_ddl_generator {
             $s .= " PRIMARY KEY" if ($i->{primary_key} and scalar @{$table->{primary_key}} == 1);
             $s .= " NOT NULL" if ($i->{not_null});
             if (exists $i->{default}) {
-                if ($i->{default} eq 'now') {
+                if ($i->{default} eq "'now'") {
                    $s .= ' DEFAULT timeofday()::TIMESTAMP';
                 }
                 # elsif ($i->{default} eq '') {

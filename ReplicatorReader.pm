@@ -50,7 +50,7 @@ sub replicator_reader {
         if (any {$_ =~ /^FF$/i} @a) {
             my $i = first_index {$_ =~ /^FF$/i} @a;
             splice(@a, $i, 1);
-            push @{$table{fields}}, {name => 'date_created', type => 'TIMESTAMP', not_null => 1, default => 'now'};
+            push @{$table{fields}}, {name => 'date_created', type => 'TIMESTAMP', not_null => 1, default => "'now'"};
             push @{$table{fields}}, {name => 'created_by', type => 'VARCHAR', not_null => 1, default => '\'\'', };
             push @{$table{fields}}, {name => 'last_modified', type => 'TIMESTAMP', not_null => 1 };
             push @{$table{fields}}, {name => 'modified_by', type => 'VARCHAR', not_null => 1, default => "''", };
