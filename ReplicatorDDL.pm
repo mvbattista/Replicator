@@ -60,7 +60,13 @@ sub replicator_ddl_generator {
                 # }
                 else {
                     $s .= " DEFAULT ";
-                    $s .= $i->{default};
+                    if ($i->{type} =~ /^boolean$/i and 
+                        $i->{default} =~ /'(false|true)'/i) {
+                        $s .= uc $1;
+                    }
+                    else {
+                        $s .= $i->{default};
+                    }
                 }
             }
             unless ($comma_count == 0) {

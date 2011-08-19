@@ -92,10 +92,10 @@ sub replicator_reader {
         my @single_uniques;
         for my $line (@a) {
             my $default = undef;
-        	if ($line =~ /\s+D=('.*'|.*)\s+/) {
-        		$default = $1;       		
-        		$line =~ s/\s+D=('.*'|.*)\s+/ /;
-        	}
+            if ($line =~ /\s+D=('.*')\s+/) {
+                $default = $1;
+                $line =~ s/\s+D=('.*')\s+/ /;
+            }
             my @b = split(/\s+/, $line);
             my $field_name = shift @b;
             my $field_type = uc shift @b;
@@ -105,9 +105,11 @@ sub replicator_reader {
                 if ($reading =~ /^NN$/i) {
                     $not_null = 1; next;
                 }
-#                elsif ($reading =~ /^D=(.+)$/i) {
-#                    $default = $1; next;
-#                }
+                elsif ($reading =~ /^D=(.+)$/i) {
+                    $default = $1;
+                    $default = "'$default'" if ($default !~ /^\d+$/);
+                    next;
+                }
                 elsif ($reading =~ /^P$/i) {
                     push @{$table{primary_key}}, $field_name; next;
                 }
