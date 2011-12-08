@@ -107,7 +107,17 @@ sub replicator_reader {
                 }
                 elsif ($reading =~ /^D=(.+)$/i) {
                     $default = $1;
-                    $default = "'$default'" if ($default !~ /^\d+$/);
+                    if ($field_type =~ /^boolean$/i) {
+                        if ($default =~ /^false$/i or $default == 0) {
+                            $default = 'FALSE';
+                        }
+                        else {
+                            $default = 'TRUE';
+                        }
+                    }
+                    else {
+                        $default = "'$default'" if ($default !~ /^\d+$/);
+                    }
                     next;
                 }
                 elsif ($reading =~ /^P$/i) {

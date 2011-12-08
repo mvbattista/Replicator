@@ -37,11 +37,31 @@ __PACKAGE__->meta->setup(
 MODEL_text
 
 		for my $column ( @{$table->{fields}} ) {
+            my $default_string = $column->{default};
+            if (defined $default_string) {
+                if ($default_string eq "''") {
+                    $default_string = "default => '', ";
+                }
+                elsif ($column->{type} =~ /^boolean$/i) {
+                    if ($default_string =~ /^false$/i) {
+                        $default_string = "default => 0, ";
+                    }
+                    else {
+                        $default_string = "default => 1, ";
+                    }
+                }
+                else {
+                    $default_string = "default => ".$default_string.", "
+                }
+            }
+            else {
+                $default_string = "";
+            }
 	    	$s .= sprintf "%8s%-20s=> { type => '%s', %s%s%s%s%s},\n", "",
 				$column->{name},
 				lc $column->{type},
 				$column->{not_null} ? "not_null => 1, ":"",
-				$column->{default} ? ($column->{default} eq "''" ? "default => '', " : "default => $column->{default}, "):"",
+                $default_string ? $default_string : "",
 				$column->{length} ? "length => $column->{length}, ":"",
 				($column->{primary_key} and scalar @{$table->{primary_key}} == 1) ? "primary_key => 1, ":"",
 				$column->{sequence} ? "sequence => '$column->{sequence}', ":"",
