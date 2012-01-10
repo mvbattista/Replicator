@@ -101,7 +101,6 @@ sub _detail_generic_hook {
     my \$object = shift;
     my \$content = shift;
 
-    \$self->SUPER::_detail_generic_hook(\@_);
     return;
 }
 
@@ -112,7 +111,6 @@ sub _properties_form_hook {
     my \$self = shift;
     my \$values = \$self->{_controller}->{_values};
 
-    \$self->SUPER::_properties_form_hook(\@_);
     return;
 }
 
