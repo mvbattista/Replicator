@@ -44,7 +44,9 @@ ReplicatorTest.pm
 	
 TASK LIST:
 Create Manage DDL Insert scripts and Controllers.
-Detect foreign key column and table from database
+Detect foreign key column and table names from database, checking validity
+SQL variable type validation
 Trigger should not be created when no ID
 One word check in terminal read mode
 Relationships in terminal read mode
+Add relationships to existing models
